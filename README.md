@@ -3,6 +3,4 @@
 
 ## つかうｱﾋﾟ（api）
 
-SS撮影：screenshotlayer(https://screenshotlayer.com/)
-
 Slack通知：webhookとか？？？
