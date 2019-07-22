@@ -52,14 +52,15 @@ $url_array = [
     'https://kikankou.jp/taiyo',
     'https://kikankou.jp/eagle-okayama',
     'https://kikankou.jp/komatsu-kcx',
-    'https://kagepon.com/',
-    'https://www.kikankou-career-navi.com/',
+    'https://kagepon.com',
+    'https://www.kikankou-career-navi.com',
 ];
 
 $array_count = count($url_array);
 for ($i=0; $i < $array_count; $i++) { 
     $url_domain=parse_url($url_array[$i]);
     $hostname = $url_domain['host'];
+
     if(array_key_exists('path',$url_domain)){
         $pathname = $url_domain['path'];
     }
@@ -69,20 +70,17 @@ for ($i=0; $i < $array_count; $i++) {
     $opts = array('http'=>array('header' => "User-Agent:MyAgent/1.0rn"));
     $context = stream_context_create($opts);
     $data = file_get_contents($url,false,$context);
+
+    // htmlファイルを保存するディレクトリの作成
     // 保存するディレクトリのパス
     if (!empty($pathname)) {
         $svdirpass = "./download/{$today}"."/".$hostname."/".$pathname;
-        // ディレクトリの作成
-        if(file_exists($svdirpass) == false) {
-            mkdir($svdirpass,0777,true);
-        }
+        createDirectoryIfNotExists($svdirpass);
     } else {
         $svdirpass = "./download/{$today}"."/".$hostname;
-        // ディレクトリの作成
-        if(file_exists($svdirpass) == false) {
-            mkdir($svdirpass,0777,true);
-        }
+        createDirectoryIfNotExists($svdirpass);
     }
+
     // 保存するファイル名
     $svfilename = "saved.html";
 
@@ -94,6 +92,9 @@ for ($i=0; $i < $array_count; $i++) {
     } else {
         echo "保存失敗（ファイルが存在しています。）\n";
     }
+
+    createDirectoryForImages($today, $hostname, $pathname, $url);
+
     // 今日のファイルサイズ
     $filesize_today = filesize($svdirpass."/".$svfilename);
     echo "今日のファイルサイズ：".$filesize_today."\n";
@@ -103,32 +104,136 @@ for ($i=0; $i < $array_count; $i++) {
         // 昨日のファイルサイズ
         $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename);
         echo "昨日のファイルのサイズ：".$filesize_yesterday."\n";
-        // ファイルサイズが違かったら、SSを撮影＆Slackに通知をする
+        // ファイルサイズが違かったら、Slackに通知をする
         if ($filesize_today !== $filesize_yesterday) {
-            $ch = curl_init();
-
-            curl_setopt($ch, CURLOPT_URL, getenv('SLACK_ACCESSKEY'));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"
-                ウェブサイトに変更があります！\n
-                変更されたウェブサイト：$url_array[$i]\n
-                今日のファイルサイズ：$filesize_today\n
-                昨日のファイルサイズ：$filesize_yesterday\n
-                \"}");
-            curl_setopt($ch, CURLOPT_POST, 1);
-
-            $headers = array();
-            $headers[] = 'Content-Type: application/json';
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
-            $result = curl_exec($ch);
-            if (curl_errno($ch)) {
-                echo 'Error:' . curl_error($ch);
-            }
-            curl_close($ch);
+            notifyToSlack($url_array[$i],$filesize_today,$filesize_yesterday);
         }
     }
 // pathnameの削除
 $pathname = "";
-sleep(1);
+sleep(5);
 } //for
+
+// slackにメッセージ送信するcURL
+function notifyToSlack($url,$filesize_today,$filesize_yesterday){
+    $ch = curl_init();
+
+    curl_setopt($ch, CURLOPT_URL, getenv('SLACK_ACCESSKEY'));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"
+        ウェブサイトに変更があります！\n
+        変更されたウェブサイト：$url\n
+        今日のファイルサイズ：$filesize_today\n
+        昨日のファイルサイズ：$filesize_yesterday\n
+        \"}");
+    curl_setopt($ch, CURLOPT_POST, 1);
+
+    $headers = array();
+    $headers[] = 'Content-Type: application/json';
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
+    $result = curl_exec($ch);
+    if (curl_errno($ch)) {
+        echo 'Error:' . curl_error($ch);
+    }
+    curl_close($ch);
+}
+
+// ディレクトリがパスに存在しなかったら、ディレクトリを作成する
+function createDirectoryIfNotExists($path){
+    // ディレクトリの作成
+    if(file_exists($path) == false) {
+        mkdir($path,0777,true);
+    }
+}
+
+// 画像を保存するディレクトリを作成
+function createDirectoryForImages($today, $hostname, $pathname, $url){
+    // 保存ディレクトリの作成
+    // 日付/ドメイン名/imagesディレクトリ
+    // 001.jpeg
+    // パスが存在するか判定
+    $imgdirname = "images";
+    // パスが存在する時
+    if (!empty($pathname)) {
+
+        echo "パスが存在します。\n";
+
+        // 画像を保存するディレクトリ
+        $svimgdir = "./download/{$today}"."/".$hostname.$pathname."/".$imgdirname;
+        
+        // 画像を保存するディレクトリが存在しない時　=>　ディレクトリを作成
+        if(file_exists($svimgdir) == false) {
+            mkdir($svimgdir,0777,true);
+            echo "画像用のimagesディレクトリを作成しました。\n";
+            echo "作成したディレクトリは、以下の通りです\n";
+            echo $svimgdir."\n";
+        }
+
+    } else {
+
+        echo "パス（サブディレクトリ）が存在しません\n";
+
+        // 画像を保存するディレクトリ
+        $svimgdir = "./download/{$today}"."/".$hostname.$pathname."/".$imgdirname;
+        var_dump($svimgdir);
+        // 画像を保存するディレクトリが存在しない時　=>　ディレクトリを作成
+        if(file_exists($svimgdir) == false) {
+            mkdir($svimgdir,0777,true);
+            echo "画像用のimagesディレクトリを作成しました。\n";
+            echo "作成したディレクトリは、以下の通りです\n";
+            echo $svimgdir."\n";
+        }
+    }
+    getImagesSourcePathAsArray($url, $svimgdir);
+}
+
+// 指定したURLのsrcパスを
+function getImagesSourcePathAsArray($url, $svimgdir){
+
+    // URLからソースを取得
+    $opts = array('http'=>array('header' => "User-Agent:MyAgent/1.0rn"));
+    $context = stream_context_create($opts);
+    $html = file_get_contents($url,false,$context);
+
+    // URLから画像の拡張子を取得
+    preg_match_all('/<img.*src\s*=\s*[\"|\'](.*?)[\"|\'].*>/i', file_get_contents($url,false,$context), $imgpatharray);
+    
+    // 配列に入っている画像パスの数を取得（ループに使用）
+    $imgpathcount = count($imgpatharray[1]);
+
+    // 相対パスをドメインに変更
+    $url_domain=parse_url($url);
+    $hostname = $url_domain['host'];
+    // 例）https://google.com
+    $homepage_url = "https://".$hostname;
+
+    // 配列に入ってる画像パスの数だけループを回す
+    for ($i=0; $i < $imgpathcount; $i++) { 
+
+        // 頭が「./」だったら「.」を削除して$homepage_urlをつける
+        if(substr($imgpatharray[1][$i], 0, 2) == "./"){
+            // １文字目削除
+            $img_fullpath = $homepage_url.ltrim($imgpatharray[1][$i],'.');
+        }
+        // 頭が「/」だったらそのまま$homepage_urlをつける
+        if(substr($imgpatharray[1][$i], 0, 1) == "/"){
+            $img_fullpath = $homepage_url.$imgpatharray[1][$i];
+        }
+
+        //画像を保存する
+        SaveImage($img_fullpath, $i, $svimgdir);
+    }
+}
+
+function SaveImage($url,$i,$svimgdir){
+    // 巡回したサイトのHTMLファイルを保存する
+    $opts = array('http'=>array('header' => "User-Agent:MyAgent/1.0rn"));
+    $context = stream_context_create($opts);
+
+    $img = file_get_contents($url,false,$context);
+    $image_name = "savedimage".$i.".jpg";
+    // 保存
+    file_put_contents($svimgdir."/".$image_name, $img);
+    echo $i+"1"."枚目の画像を保存しました。\n";
+}
