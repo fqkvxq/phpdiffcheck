@@ -11,49 +11,7 @@ $yesterday = date("Ymd",strtotime('-1 day'));
 
 // urlの配列
 $url_array = [
-    'https://kikankou.jp/toyota',
-    'https://kikankou.jp/toyota/toyota-shokki',
-    'https://kikankou.jp/toyota/tmej',
-    'https://kikankou.jp/toyota/toyotakyusyu',
-    'https://kikankou.jp/fuji',
-    'https://kikankou.jp/honda',
-    'https://kikankou.jp/honda-suzuka',
-    'https://kikankou.jp/nissan-tochigi',
-    'https://kikankou.jp/nissan',
-    'https://kikankou.jp/nissan-shatai',
-    'https://kikankou.jp/awk',
-    'https://kikankou.jp/pajero',
-    'https://kikankou.jp/mazda',
-    'https://kikankou.jp/nissankyusyu',
-    'https://kikankou.jp/nissan-shatai-kyushu',
-    'https://kikankou.jp/isuzu',
-    'https://kikankou.jp/toyota/hino',
-    'https://kikankou.jp/suzuki-kosai',
-    'https://kikankou.jp/suzuki',
-    'https://kikankou.jp/suzuki_iwata',
-    'https://kikankou.jp/suzuki_osuka',
-    'https://kikankou.jp/hitachikenki',
-    'https://kikankou.jp/komatsu2',
-    'https://kikankou.jp/toyota/toyota-boshoku',
-    'https://kikankou.jp/aisin-aw',
-    'https://kikankou.jp/akk',
-    'https://kikankou.jp/cvtec',
-    'https://kikankou.jp/nissan-zama',
-    'https://kikankou.jp/nissan-sagamihara',
-    'https://kikankou.jp/nissan-shatai-kyoto',
-    'https://kikankou.jp/jatco',
-    'https://kikankou.jp/ntn',
-    'https://kikankou.jp/ntn-okayama',
-    'https://kikankou.jp/bridgestone',
-    'https://kikankou.jp/bridgestone-seki',
-    'https://kikankou.jp/bridgestone-tochigi',
-    'https://kikankou.jp/sumidenso',
-    'https://kikankou.jp/canon-tochigi',
-    'https://kikankou.jp/taiyo',
-    'https://kikankou.jp/eagle-okayama',
-    'https://kikankou.jp/komatsu-kcx',
-    'https://kagepon.com',
-    'https://www.kikankou-career-navi.com',
+    'https://kikankou.jp',
 ];
 
 $array_count = count($url_array);
@@ -102,7 +60,11 @@ for ($i=0; $i < $array_count; $i++) {
     $yesterdaysvdirpass = "./download/{$yesterday}";
     if (file_exists($yesterdaysvdirpass) == true) {
         // 昨日のファイルサイズ
-        $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename);
+        if (!empty($pathname)) {
+            $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename);
+        } else {
+            $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$svfilename);
+        }
         echo "昨日のファイルのサイズ：".$filesize_yesterday."\n";
         // ファイルサイズが違かったら、Slackに通知をする
         if ($filesize_today !== $filesize_yesterday) {
