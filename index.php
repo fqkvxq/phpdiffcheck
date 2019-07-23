@@ -3,121 +3,163 @@
 require_once('./vendor/autoload.php');
 $dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->load();
+error_reporting(0);
 
-$today = date("Ymd");
-$yesterday = date("Ymd",strtotime('-1 day'));
+// main関数の実行
+main();
 
-// cronは、1日1回くらい巡回すればいいかな
+// メイン関数
+function main(){
+    // 今日
+    $today = date("Ymd");
+    // 昨日
+    $yesterday = date("Ymd",strtotime('-1 day'));
+    // ２周間前
+    $twoWeeksBefore = date("Ymd",strtotime('-2 day'));
 
-// urlの配列
-$url_array = [
-    'https://kikankou.jp/toyota',
-    'https://kikankou.jp/toyota/toyota-shokki',
-    'https://kikankou.jp/toyota/tmej',
-    'https://kikankou.jp/toyota/toyotakyusyu',
-    'https://kikankou.jp/fuji',
-    'https://kikankou.jp/honda',
-    'https://kikankou.jp/honda-suzuka',
-    'https://kikankou.jp/nissan-tochigi',
-    'https://kikankou.jp/nissan',
-    'https://kikankou.jp/nissan-shatai',
-    'https://kikankou.jp/awk',
-    'https://kikankou.jp/pajero',
-    'https://kikankou.jp/mazda',
-    'https://kikankou.jp/nissankyusyu',
-    'https://kikankou.jp/nissan-shatai-kyushu',
-    'https://kikankou.jp/isuzu',
-    'https://kikankou.jp/toyota/hino',
-    'https://kikankou.jp/suzuki-kosai',
-    'https://kikankou.jp/suzuki',
-    'https://kikankou.jp/suzuki_iwata',
-    'https://kikankou.jp/suzuki_osuka',
-    'https://kikankou.jp/hitachikenki',
-    'https://kikankou.jp/komatsu2',
-    'https://kikankou.jp/toyota/toyota-boshoku',
-    'https://kikankou.jp/aisin-aw',
-    'https://kikankou.jp/akk',
-    'https://kikankou.jp/cvtec',
-    'https://kikankou.jp/nissan-zama',
-    'https://kikankou.jp/nissan-sagamihara',
-    'https://kikankou.jp/nissan-shatai-kyoto',
-    'https://kikankou.jp/jatco',
-    'https://kikankou.jp/ntn',
-    'https://kikankou.jp/ntn-okayama',
-    'https://kikankou.jp/bridgestone',
-    'https://kikankou.jp/bridgestone-seki',
-    'https://kikankou.jp/bridgestone-tochigi',
-    'https://kikankou.jp/sumidenso',
-    'https://kikankou.jp/canon-tochigi',
-    'https://kikankou.jp/taiyo',
-    'https://kikankou.jp/eagle-okayama',
-    'https://kikankou.jp/komatsu-kcx',
-];
+    // cronは、1日1回くらい巡回すればいいかな
 
-$array_count = count($url_array);
-for ($i=0; $i < $array_count; $i++) { 
-    $url_domain=parse_url($url_array[$i]);
-    $hostname = $url_domain['host'];
+    // urlの配列
+    $url_array = [
+        'https://kikankou.jp/toyota',
+        'https://kikankou.jp/',
+        'https://kikankou.jp/toyota/toyota-shokki',
+        'https://kikankou.jp/toyota/tmej',
+        'https://kikankou.jp/toyota/toyotakyusyu',
+        'https://kikankou.jp/fuji',
+        'https://kikankou.jp/honda',
+        'https://kikankou.jp/honda-suzuka',
+        'https://kikankou.jp/nissan-tochigi',
+        'https://kikankou.jp/nissan',
+        'https://kikankou.jp/nissan-shatai',
+        'https://kikankou.jp/awk',
+        'https://kikankou.jp/pajero',
+        'https://kikankou.jp/mazda',
+        'https://kikankou.jp/nissankyusyu',
+        'https://kikankou.jp/nissan-shatai-kyushu',
+        'https://kikankou.jp/isuzu',
+        'https://kikankou.jp/toyota/hino',
+        'https://kikankou.jp/suzuki-kosai',
+        'https://kikankou.jp/suzuki',
+        'https://kikankou.jp/suzuki_iwata',
+        'https://kikankou.jp/suzuki_osuka',
+        'https://kikankou.jp/hitachikenki',
+        'https://kikankou.jp/komatsu2',
+        'https://kikankou.jp/toyota/toyota-boshoku',
+        'https://kikankou.jp/aisin-aw',
+        'https://kikankou.jp/akk',
+        'https://kikankou.jp/cvtec',
+        'https://kikankou.jp/nissan-zama',
+        'https://kikankou.jp/nissan-sagamihara',
+        'https://kikankou.jp/nissan-shatai-kyoto',
+        'https://kikankou.jp/jatco',
+        'https://kikankou.jp/ntn',
+        'https://kikankou.jp/ntn-okayama',
+        'https://kikankou.jp/bridgestone',
+        'https://kikankou.jp/bridgestone-seki',
+        'https://kikankou.jp/bridgestone-tochigi',
+        'https://kikankou.jp/sumidenso',
+        'https://kikankou.jp/canon-tochigi',
+        'https://kikankou.jp/taiyo',
+        'https://kikankou.jp/eagle-okayama',
+        'https://kikankou.jp/komatsu-kcx',
+    ];
 
-    if(array_key_exists('path',$url_domain)){
-        $pathname = $url_domain['path'];
-    }
-    // 巡回するサイトのURLを指定する
-    $url = $url_array[$i];
-    // 巡回したサイトのHTMLファイルを保存する
-    $opts = array('http'=>array('header' => "User-Agent:MyAgent/1.0rn"));
-    $context = stream_context_create($opts);
-    $data = file_get_contents($url,false,$context);
+    $array_count = count($url_array);
+    for ($i=0; $i < $array_count; $i++) { 
+        $url_domain=parse_url($url_array[$i]);
+        $hostname = $url_domain['host'];
+        echo "ホスト名：".$hostname."\n";
 
-    // htmlファイルを保存するディレクトリの作成
-    // 保存するディレクトリのパス
-    if (!empty($pathname)) {
-        $svdirpass = "./download/{$today}"."/".$hostname."/".$pathname;
-        createDirectoryIfNotExists($svdirpass);
-    } else {
-        $svdirpass = "./download/{$today}"."/".$hostname;
-        createDirectoryIfNotExists($svdirpass);
-    }
-
-    // 保存するファイル名
-    $svfilename = "saved.html";
-
-    // 日付ディレクトリ内にファイルが存在しないことを確認
-    if(file_exists($svdirpass."/".$svfilename) == false) {
-        echo "ファイルを保存します\n";
-        // ファイルの保存
-        file_put_contents($svdirpass."/".$svfilename,$data);
-    } else {
-        echo "保存失敗（ファイルが存在しています。）\n";
-    }
-
-    createDirectoryForImages($today, $hostname, $pathname, $url);
-
-    // 今日のファイルサイズ
-    $filesize_today = filesize($svdirpass."/".$svfilename);
-    echo "今日のファイルサイズ：".$filesize_today."\n";
-    // 巡回したサイトのHTMLファイルのファイルサイズを前回に保存したものと比較する
-    $yesterdaysvdirpass = "./download/{$yesterday}";
-    if (file_exists($yesterdaysvdirpass) == true) {
-        // 昨日のファイルサイズ
-        if (!empty($pathname)) {
-            $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename);
+        if(array_key_exists('path',$url_domain)){
+            $pathname = $url_domain['path'];
         } else {
-            $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$svfilename);
+            $pathname = "";
         }
-        echo "昨日のファイルのサイズ：".$filesize_yesterday."\n";
-        // ファイルサイズが違かったら、Slackに通知をする
-        if ($filesize_today !== $filesize_yesterday) {
-            notifyToSlack($url_array[$i],$filesize_today,$filesize_yesterday);
+        // 巡回するサイトのURLを指定する
+        $url = $url_array[$i];
+        echo "巡回中のサイト：".$url."\n";
+        // 巡回したサイトのHTMLファイルを保存する
+        $opts = array('http'=>array('header' => "User-Agent:MyAgent/1.0rn"));
+        $context = stream_context_create($opts);
+        $data = file_get_contents($url,false,$context);
+
+        // htmlファイルを保存するディレクトリの作成
+        // 保存するディレクトリのパス
+        if (!empty($pathname)) {
+            $svdirpass = "./download/{$today}"."/".$hostname."/".$pathname;
+            createDirectoryIfNotExists($svdirpass);
+        } else {
+            $svdirpass = "./download/{$today}"."/".$hostname;
+            createDirectoryIfNotExists($svdirpass);
         }
-    }
-// pathnameの削除
-$pathname = "";
-sleep(5);
-} //for
+
+        // 保存するファイル名
+        $svfilename = "saved.html";
+
+        // 日付ディレクトリ内にファイルが存在しないことを確認
+        if(file_exists($svdirpass."/".$svfilename) == false) {
+            echo "HTMLファイルが該当ディレクトリになかったので保存しました。\n該当ディレクトリ：$svdirpass\n";
+            // ファイルの保存
+            file_put_contents($svdirpass."/".$svfilename,$data);
+        } else {
+            echo "日付ディレクトリにHTMLファイルがすでにあるので、HTMLファイルは保存されませんでした。\n";
+        }
+
+        createDirectoryForImages($today, $hostname, $pathname, $url);
+        
+        compareToYesterday($pathname, $url, $svdirpass, $svfilename, $today, $yesterday, $hostname, $url_array, $i);
+
+        echo "========\n";
+    // pathnameの削除
+    $pathname = "";
+    sleep(1);
+    } //for
+}
+
+// 巡回したサイトのHTMLファイルのファイルサイズを前回に保存したものと比較する
+function compareToYesterday($pathname, $url, $svdirpass, $svfilename, $today, $yesterday, $hostname, $url_array, $i){
+        // 今日のファイルサイズ
+        $filesize_today = filesize($svdirpass."/".$svfilename);
+        echo "今日（{$today}）のファイルサイズ：".$filesize_today."\n";
+        // 巡回したサイトのHTMLファイルのファイルサイズを前回に保存したものと比較する
+        $yesterdaysvdirpass = "./download/{$yesterday}";
+        if (file_exists($yesterdaysvdirpass) == true) {
+            // 昨日のファイルサイズ
+            if (!empty($pathname)) {
+                // ファイルがあるかどうか見る
+                if(file_exists($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename)){
+                    $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$pathname."/".$svfilename);
+                    // ファイルサイズが違かったら、Slackに通知をする
+                    if ($filesize_today !== $filesize_yesterday) {
+                        notifyToSlack($url,$filesize_today,$filesize_yesterday,$today,$yesterday);
+                        echo "昨日（{$yesterday}）のファイルのサイズ：".$filesize_yesterday."\n";
+                        echo "ファイルサイズが異なっているのを検出したため、Slackに通知を送信しました。\n";
+                    } else {
+                        echo "昨日（{$yesterday}）のファイルのサイズ：".$filesize_yesterday."\n";
+                        echo "ファイルサイズに変更はありませんでした。\n";
+                    }
+                } else {
+                    echo "昨日の比較対象ファイルがありません。\n";
+                }
+            } else {
+                if(file_exists($yesterdaysvdirpass."/".$hostname."/".$svfilename)){
+                    $filesize_yesterday = filesize($yesterdaysvdirpass."/".$hostname."/".$svfilename);
+                    // ファイルサイズが違かったら、Slackに通知をする
+                    if ($filesize_today !== $filesize_yesterday) {
+                        notifyToSlack($url,$filesize_today,$filesize_yesterday,$today,$yesterday);
+                        echo "昨日（{$yesterday}）のファイルのサイズ：".$filesize_yesterday."\n";
+                        echo "ファイルサイズが異なっているのを検出したため、Slackに通知を送信しました。\n";
+                    }
+                } else {
+                    echo "昨日の比較対象ファイルがありません。\n";
+                }
+            }
+        }
+}
 
 // slackにメッセージ送信するcURL
-function notifyToSlack($url,$filesize_today,$filesize_yesterday){
+function notifyToSlack($url,$filesize_today,$filesize_yesterday,$today,$yesterday){
     $ch = curl_init();
 
     curl_setopt($ch, CURLOPT_URL, getenv('SLACK_ACCESSKEY'));
@@ -125,8 +167,8 @@ function notifyToSlack($url,$filesize_today,$filesize_yesterday){
     curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"text\":\"
         ウェブサイトに変更があります！\n
         変更されたウェブサイト：$url\n
-        今日のファイルサイズ：$filesize_today\n
-        昨日のファイルサイズ：$filesize_yesterday\n
+        今日($today)のファイルサイズ：$filesize_today\n
+        昨日($yesterday)のファイルサイズ：$filesize_yesterday\n
         \"}");
     curl_setopt($ch, CURLOPT_POST, 1);
 
@@ -147,6 +189,7 @@ function createDirectoryIfNotExists($path){
     if(file_exists($path) == false) {
         mkdir($path,0777,true);
     }
+    echo "保存するディレクトリを作成しました。\n";
 }
 
 // 画像を保存するディレクトリを作成
@@ -159,7 +202,7 @@ function createDirectoryForImages($today, $hostname, $pathname, $url){
     // パスが存在する時
     if (!empty($pathname)) {
 
-        echo "パスが存在します。\n";
+        echo "ドメインルートではないページであることを検出しました。\n";
 
         // 画像を保存するディレクトリ
         $svimgdir = "./download/{$today}"."/".$hostname.$pathname."/".$imgdirname;
@@ -168,17 +211,16 @@ function createDirectoryForImages($today, $hostname, $pathname, $url){
         if(file_exists($svimgdir) == false) {
             mkdir($svimgdir,0777,true);
             echo "画像用のimagesディレクトリを作成しました。\n";
-            echo "作成したディレクトリは、以下の通りです\n";
+            echo "作成したディレクトリ：";
             echo $svimgdir."\n";
         }
 
     } else {
 
-        echo "パス（サブディレクトリ）が存在しません\n";
+        echo "ドメインルートのページを検出しました。\n";
 
         // 画像を保存するディレクトリ
         $svimgdir = "./download/{$today}"."/".$hostname.$pathname."/".$imgdirname;
-        var_dump($svimgdir);
         // 画像を保存するディレクトリが存在しない時　=>　ディレクトリを作成
         if(file_exists($svimgdir) == false) {
             mkdir($svimgdir,0777,true);
