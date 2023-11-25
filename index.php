@@ -2,7 +2,7 @@
 
 require_once('./vendor/autoload.php');
 $dotenv = Dotenv\Dotenv::create(__DIR__);
-$dotenv->load();
+$dotenv->load(); // eeeee
 error_reporting(0);
 
 // main関数の実行
